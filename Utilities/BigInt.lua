@@ -65,6 +65,7 @@ local function normalize(bi, notrunc)
 			end
 		end
 	end
+
 	-- is top component negative?
 	if c[#c] < 0 then
 		-- switch the sign and fix components
@@ -417,7 +418,6 @@ end
 local function biginttostring(bi)
 	local s = {}
 	if bi < bigint(0) then
-		print("BigInt is printing negative")
 		bi = negate(bi)
 		table.insert(s, "-")
 	end
@@ -440,7 +440,7 @@ bigintmt = {
 	__lt = lt,
 	__le = le,
 	__tostring = biginttostring,
-	
+
 	-- Secure this meta-table
 	__metatable = true
 }
@@ -457,13 +457,13 @@ bigint = function (n)
 	if type(n) == "string" then
 		local digits = { n:byte(1, -1) }
 		local num
-		
+
 		bi = bigint(0)
-		
+
 		for i = 1, #digits do
 			-- Just filter out spaces and non valid characters
 			num = digits[i]
-			
+
 			-- Adjust the raw ascii value
 			if ( num >= 48 and num <= 57 ) then			-- char is equal or between 0 and 9
 				num = num - 48
@@ -472,9 +472,10 @@ bigint = function (n)
 			elseif ( num >= 97 and num <= 102 ) then	-- char is equal or between a and f
 				num = num - 87							--    offset: 10 - 97 = -87
 			else
+				-- Dont calculate whitespace or none hex characters
 				num = nil
 			end
-			
+
 			if num then
 				bi = addint(mulint(bi, 16), num)
 			end
