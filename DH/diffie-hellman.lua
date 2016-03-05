@@ -250,15 +250,6 @@ do
 
 end
 
-
-local numberString = "10"
-
--- Lets do some tests
-local prime = BigInt.Create(primes["DEBUG"])
-
-print("Using Prime:", tostring(prime))
-
-
 local diffiehellman_mt
 
 local function checkRange(param, P)
@@ -291,41 +282,96 @@ local function parse(self, context)
 
 end
 
-
 local BIGINT_ZERO = BigInt.Create(0)
 local BIGINT_ONE = BigInt.Create(1)
 local BIGINT_TWO = BigInt.Create(2)
+
+local function odd(bi)
+	return bi.comps[1] % 2 == 1
+end
 
 local function modular_pow(base, exponent, modulus)
 	if modulus == BIGINT_ONE then return 0 end
 	local result = BIGINT_ONE
 
-	print("Before", base)
-
 	base = base % modulus
 
-	print("After", base)
-
-	print("Exp Before:", tostring(exponent))
-
 	while exponent > BIGINT_ZERO do
-		-- TODO: Optimize Odd check
-		if exponent % BIGINT_TWO == BIGINT_ONE then
-			result = (result * base) % modulus
+
+		print("--------------------------------------------------------------------------------------------------------------------")
+		print(exponent == nil, base == nil, result == nil)
+
+		if odd(exponent) then
+			--print("Check:", result, base, modulus)
+			local baseResult = result * base
+
+			print("OddRslt: ", baseResult)
+
+			result = baseResult % modulus
+
+			print("NResult: ", result)
 		end
+
+
 
 		exponent = exponent / BIGINT_TWO
 
-		base = (base * base) % modulus
+		local squaredBase = base * base
+		print("Base2:   ", squaredBase)
+
+		base = squaredBase % modulus
+
+
+		print("Result:  ", result)
+		print("Base:    ", base)
+		print("Exponent:", exponent)
+		print("Modulus: ", modulus)
+		print("")
+		print("")
+		print("")
 	end
+
+	return result
 end
 
 
-diffiehellman_mt = {
-	__index = {
-		parse = parse,
-	}
-}
+--[[function Matrix_ModExp(Matrix A, int b, int c)
+   if (b == 0):
+         return I  // The identity matrix
+   if (b mod 2 == 1):
+         return (A * Matrix_ModExp(A, b - 1, c)) mod c
+   Matrix D := Matrix_ModExp(A, b / 2, c)
+   return (D * D) mod c
+]]
+
+local i = 0
+local function matrix_ModExp(base, exponent, modulus)
+	i = i + 1
+	print("New["..i.."]:", base, exponent, modulus)
+	if exponent == BIGINT_ZERO then
+		print("Yeah! We made it to zero!")
+		return BIGINT_ONE
+	elseif odd(exponent) then
+		print("Odd: Minus 1")
+
+
+		local minusOne = matrix_ModExp(base, exponent - 1, modulus)
+
+		print("PostOdd:", base, minusOne, modulus)
+		local t = (base * minusOne) % modulus
+		print("Result:", t)
+		return t
+	end
+	local temp =  matrix_ModExp(base, exponent / 2, modulus)
+	i = i - 1
+	return (temp * temp) % modulus
+end
+
+
+
+
+local prime = BigInt.Create(primes["2048"])
+print("Using Prime:", tostring(prime))
 
 
 local alice = {}
@@ -336,15 +382,96 @@ local bob = {}
 alice.a = generateKey(256)
 bob.a = generateKey(256)
 
+
+--local testNumBase = "115792089237316195423570985008687907853269984665640564039457584007913129639936"
+--                     115792089237316195423570985008687907853269984665640564039457584007913129639936
+--local testNumMod =  "115792089210356248762697446949407573530086143415290314195533631308867097853951"
+
+local testNumBase = "1 0000 0000   0000 0000   0000 0000   0000 0000   0000 0000   0000 0000   0000 0000   0000 0000"
+local testNumMod =    "FFFF FFFF   0000 0001   0000 0000   0000 0000   0000 0000   FFFF FFFF   FFFF FFFF   FFFF FFFF"
+
+
+local biNumBase = BigInt.Create(testNumBase)
+local biNumMod = BigInt.Create(testNumMod)
+
+--[[
+local a = BigInt.Create("80")
+local b = BigInt.Create("100")
+local p = BigInt.Create("241")
+local m = a * b
+print("A * B = "..tostring(m), 256*128)
+print(m % p)
+]]
+
+
+--bi - ((bi / m) * m)
+
+
+--[[
+local div = biNumBase / biNumMod
+print("Div:", div, type(div))
+
+local even = div * biNumMod
+print("Even:", even, type(even))
+
+local dif = biNumBase - even
+print("Dif:", dif, type(dif))
+]]
+
+--print("Exponent:", alice.a)
+--print("Mod:", prime)
+--
+
+--alice.A = matrix_ModExp(BIGINT_TWO, alice.a, prime)
+
+--print(alice.A)
+
+
+--local bigTest = "BCA3109AF5D6E68CD55A7C27ED3E124B651CE2ECC010940626AA3B5DDA0004ACE75A5A5296B07954932C439561F7DAC9F963EEF2692E1DA858A61A23875F5F729A963CEF1C22D664DE7DC510A6E87EEC5FE201E14FC6F109E6E2F726B6CCF471679633A085E65ED14C2A635DC20058E9E1C153792B953F524EE05BB6233095AD8A5D275A4204D62FFE8F596014A6D2EAAE88A5D70CCA47E1F5FEDE6BF355368883564F00BC521EFC1A2D2B3DA5753B2B0D2D3F735BAA3C52AD462F59D22B55CF0EA6406CEAC1B44E57EFAC5BD4AD6AE1F77A614D81A339529F9850E489CBE5E307275ABF8084D74AA7D67EC5A25F9FD59AB433E010D759EC36C547F6939149F3E5EBDCB3BB09FA712A45FAD6F8B5F8ABCCC2F7B22781946AEB20320196A1EA242445B83D2C45A06A29B6D36AD0F06D418927CA371CD221698EB7F722D09F763A55F08ACC63F837C30C81B6F761298A3F8644A0A0B994AC140F78622D2F09554764EFC7B0A470CE08BEBDA46D1F42C14358DDFCE522A0B4058867429407CDA5259430AAE0DD16AA909E6E2F0077659EE3C89C8D66D9F95DF0484FBB91419781A42233E3C100F933D5A2AE898B9D2FE95B046FBB804D70199A761F9B10685324D639A773044721AB6E1C9AC03A9969DAE5541C3A9B6B2F8F02D729DD1709394F0D51AE34AEAA6AB2E0000000000000001"
+--local bitTestInt = BigInt.Create(bigTest)
+
+--print(bitTestInt / prime)
+
+
+--[[
+
+This multiplication is hard because the first number is split into two parts, the second number is almost exactly half of the first, so all the highs are zero BUT all the lows are filled
+There was a bug where this multiplication would fail, but is now fixed
+
+local a = "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163"
+local b = "BCA3F09D2562A31456604EBCB84C9392E9A89FB7E62D494F7F6204A858EAF3B26EEB7954E8652A1D0DC0157339D31FC4136C0AB8E74BED944F692103EB713195A"
+local ai = BigInt.Create(a)
+local bi = BigInt.Create(b)
+
+print("")
+print("")
+print("")
+print("Multiply:", ai)
+print("      by:", bi)
+print("")
+
+local product = ai * bi
+
+print("")
+print("Result:")
+print(product)
+]]
+
+--local result = modular_pow(BIGINT_TWO, BigInt.Create("BF"), BigInt.Create("241"))
+--print(result)
+
+
 alice.A = modular_pow(BIGINT_TWO, alice.a, prime)
 bob.A = modular_pow(BIGINT_TWO, bob.a, prime)
 
 alice.K = modular_pow(bob.A, alice.a, prime)
---bob.K = modular_pow(alice.A, bob.a, prime)
+bob.K = modular_pow(alice.A, bob.a, prime)
 
---print("Alice:", alice.K)
---print("Bob:  ", bob.K)
+print("Alice:", alice.K)
+print("Bob:  ", bob.K)
 
+--[[
+]]
 
 -- Calculate our public keys
 
