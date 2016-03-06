@@ -228,18 +228,43 @@ local function multiply(a, b)
 	return bi
 end
 
+local tabs = 0
+local function getTabs() return tabs > 0 and string.rep("\t", tabs) or "" end
+local function tprint(...)
+	local n1 = select(1, ...)
+	if n1 then
+		n1 = getTabs()..tostring(n1)
+		print(n1, select(2, ...))
+	end
+end
+
 local function kmul(a, b)
+	tabs = tabs + 1
+
 	local ac, bc = a.comps, b.comps
 	local an, bn = #a.comps, #b.comps
 	local bi, bj, bk, bl = alloc(), alloc(), alloc(), alloc()
 	local ic, jc, kc, lc = bi.comps, bj.comps, bk.comps, bl.comps
 
+	--local n = fl((math.max(an, bn) + 1) / 2)
+	--
+
 	local n = math.floor(math.max(an, bn) / 2 + 0.5)
+
+	--print("No:", (math.max(an, bn) + 0.5) / 2, fl((math.max(an, bn) + 0.5) / 2))
+	--print("Yes:", (math.max(an, bn) + 1) / 2, fl((math.max(an, bn) + 1) / 2))
+
+	tprint("A ["..an.."]:", a)
+	tprint("B ["..bn.."]:", b)
+	tprint("Max / 2: ", n)
+
 	for i = 1, n do
 		ic[i] = (i + n <= an) and ac[i+n] or 0
 		jc[i] = (i <= an) and ac[i] or 0
 		kc[i] = (i + n <= bn) and bc[i+n] or 0
 		lc[i] = (i <= bn) and bc[i] or 0
+
+		tprint("Split ["..i.."]:", string.format("%-12s%-12s%-12s%-12s", ic[i], jc[i], kc[i], lc[i]))
 	end
 
 	normalize(bi)
@@ -247,32 +272,87 @@ local function kmul(a, b)
 	normalize(bk)
 	normalize(bl)
 
-	-- Perform the Karatsuba algorithm
+
+	tprint("")
+	tprint("+++++++++++++")
+	tprint("ik = bi * bk")
 	local ik = bi * bk
+	tprint("bi:", bi)
+	tprint("bk:", bk)
+	tprint("-------------")
+	tprint("")
+	tprint("+++++++++++++")
+	tprint("jl = bj * bl")
 	local jl = bj * bl
+	tprint("bj:", bj)
+	tprint("bl:", bl)
+	tprint("-------------")
+
+	tprint("")
+	tprint("++=======++")
+	tprint("mid = (bi + bj) * (bk + bl) - ik - jl")
 	local mid = (bi + bj) * (bk + bl) - ik - jl
+
+	tprint("bi:", bi)
+	tprint("bj:", bj)
+	tprint("bk:", bk)
+	tprint("bl:", bl)
+	tprint("ik:", ik)
+	tprint("jl:", jl)
+	tprint("md:", mid)
+	tprint("--=======--")
+	tprint("")
 
 	local mc = mid.comps
 	local ikc = ik.comps
 	local jlc = jl.comps
 
 	-- Prepare "jlc" for all the numbers its about to hold
-	for i = 1, n*2 + #mc do -- fill it up
+	--for i = 1, #ikc + n*2 do -- fill it up
+	local size = #ikc + #jlc + #mc
+	for i = 1, size do -- fill it up
 		jlc[i] = jlc[i] or 0
 	end
 
-	-- Fill up the lows
+	tprint("ikc length is:", #ikc)
+	tprint("jlc should be "..(#ikc + n*2).." big")
+	tprint("n:  ", n)
+	tprint("jlc:", #jlc)
+	tprint("ikc:", #ikc)
+	tprint("mc: ", #mc)
+	tprint("max:", #mc+n)
+
 	for i = 1, #mc do
+		if i+n > #jlc then
+			print(">>>] CRASH DETECTION:")
+			for i, v in pairs(jlc) do
+				print("   > "..i.." = "..v)
+			end
+		end
 		jlc[i+n] = jlc[i+n] + mc[i]
 	end
 
-	-- Fill up the highs
+	-- WHAT IS THIS!
 	for i = 1, #ikc do
+		if #jlc < i+n*2 then
+			print("Crash Detected:")
+			print("Size of jlc:", #jlc)
+			print("Index:", i, n, i+n*2)
+			print("MaxIndex:", #ikc+n*2)
+			print("Dump jlc:")
+			for i, v in pairs(jlc) do
+				print("\t"..i.." = "..v)
+			end
+		end
 		jlc[i+n*2] = jlc[i+n*2] + ikc[i]
 	end
 
 	jl.sign = a.sign * b.sign
 	normalize(jl)
+
+	tprint("ji is "..#jl.comps.." big")
+
+	tabs = tabs - 1
 	return jl
 end
 
@@ -280,13 +360,17 @@ local kthresh = 12
 
 local function mul(a, b)
 	if type(a) == "number" then
+		tprint("\tUsing Fastest Multiply")
 		return mulint(b, a)
 	elseif type(b) == "number" then
+		print("\tUsing Fastest Multiply")
 		return mulint(a, b)
 	end
 	if #a.comps < kthresh or #b.comps < kthresh then
+		tprint("\tUsing Faster Multiply")
 		return multiply(a, b)
 	end
+	tprint("\tUsing Slow Multiply")
 	return kmul(a, b)
 end
 

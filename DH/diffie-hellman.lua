@@ -303,6 +303,8 @@ local function modular_pow(base, exponent, modulus)
 
 		if odd(exponent) then
 			--print("Check:", result, base, modulus)
+
+			print("Multiply Result and Base")
 			local baseResult = result * base
 
 			print("OddRslt: ", baseResult)
@@ -315,6 +317,8 @@ local function modular_pow(base, exponent, modulus)
 
 
 		exponent = exponent / BIGINT_TWO
+		print("Exp:     ", exponent)
+
 
 		local squaredBase = base * base
 		print("Base2:   ", squaredBase)
@@ -383,16 +387,22 @@ alice.a = generateKey(256)
 bob.a = generateKey(256)
 
 
+--alice.A = modular_pow(BIGINT_TWO, alice.a, prime)
+
+
 --local testNumBase = "115792089237316195423570985008687907853269984665640564039457584007913129639936"
 --                     115792089237316195423570985008687907853269984665640564039457584007913129639936
 --local testNumMod =  "115792089210356248762697446949407573530086143415290314195533631308867097853951"
 
-local testNumBase = "1 0000 0000   0000 0000   0000 0000   0000 0000   0000 0000   0000 0000   0000 0000   0000 0000"
-local testNumMod =    "FFFF FFFF   0000 0001   0000 0000   0000 0000   0000 0000   FFFF FFFF   FFFF FFFF   FFFF FFFF"
+local testNumBase = "100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+local testNumMod =  "2"
 
 
 local biNumBase = BigInt.Create(testNumBase)
 local biNumMod = BigInt.Create(testNumMod)
+
+
+print(biNumBase * biNumBase)
 
 --[[
 local a = BigInt.Create("80")
@@ -460,17 +470,23 @@ print(product)
 --local result = modular_pow(BIGINT_TWO, BigInt.Create("BF"), BigInt.Create("241"))
 --print(result)
 
+--[[
 
+print("Calc Public Alice")
 alice.A = modular_pow(BIGINT_TWO, alice.a, prime)
+
+print("Calc Public Bob")
 bob.A = modular_pow(BIGINT_TWO, bob.a, prime)
 
+print("Calc Private Key (Alice)")
 alice.K = modular_pow(bob.A, alice.a, prime)
+
+print("Calc Private Key (Bob)")
 bob.K = modular_pow(alice.A, bob.a, prime)
 
 print("Alice:", alice.K)
 print("Bob:  ", bob.K)
 
---[[
 ]]
 
 -- Calculate our public keys
