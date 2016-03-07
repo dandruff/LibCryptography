@@ -24,7 +24,7 @@ local function cmod(a, b)
 end
 
 
-local radix = 2^26 -- maybe up to 2^26 is safe?
+local radix = 2^24 -- maybe up to 2^26 is safe?
 local radix_sqrt = fl(math.sqrt(radix))
 
 local bigintmt, bigint -- forward decl
@@ -246,10 +246,8 @@ local function kmul(a, b)
 	local bi, bj, bk, bl = alloc(), alloc(), alloc(), alloc()
 	local ic, jc, kc, lc = bi.comps, bj.comps, bk.comps, bl.comps
 
-	--local n = fl((math.max(an, bn) + 1) / 2)
-	--
-
-	local n = math.floor(math.max(an, bn) / 2 + 0.5)
+	local n = fl((math.max(an, bn) + 1) / 2)
+	--local n = math.floor(math.max(an, bn) / 2 + 0.5)
 
 	--print("No:", (math.max(an, bn) + 0.5) / 2, fl((math.max(an, bn) + 0.5) / 2))
 	--print("Yes:", (math.max(an, bn) + 1) / 2, fl((math.max(an, bn) + 1) / 2))
@@ -310,11 +308,12 @@ local function kmul(a, b)
 	-- Prepare "jlc" for all the numbers its about to hold
 	--for i = 1, #ikc + n*2 do -- fill it up
 	local size = #ikc + #jlc + #mc
+	--local size = #ikc + n*2
 	for i = 1, size do -- fill it up
 		jlc[i] = jlc[i] or 0
 	end
 
-	tprint("ikc length is:", #ikc)
+	tprint("tried to resize to:", size)
 	tprint("jlc should be "..(#ikc + n*2).." big")
 	tprint("n:  ", n)
 	tprint("jlc:", #jlc)
@@ -337,6 +336,7 @@ local function kmul(a, b)
 		if #jlc < i+n*2 then
 			print("Crash Detected:")
 			print("Size of jlc:", #jlc)
+			print("Size of ikc:", #ikc)
 			print("Index:", i, n, i+n*2)
 			print("MaxIndex:", #ikc+n*2)
 			print("Dump jlc:")
@@ -370,8 +370,10 @@ local function mul(a, b)
 		tprint("\tUsing Faster Multiply")
 		return multiply(a, b)
 	end
-	tprint("\tUsing Slow Multiply")
-	return kmul(a, b)
+	--tprint("\tUsing ''Slow'' Multiply")
+	--tprint("\tUsing Faster Multiply")
+	return multiply(a, b)
+	--return kmul(a, b)
 end
 
 local function divint(numer, denom)
